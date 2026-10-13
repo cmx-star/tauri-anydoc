@@ -135,7 +135,7 @@ dependencies = [
 
 [[package]]
 name = "anydoc-desktop"
-version = "0.1.4"
+version = "0.1.5"
 dependencies = [
  "anydoc",
  "serde",
