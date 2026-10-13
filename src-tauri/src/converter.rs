@@ -138,8 +138,8 @@ impl Converter {
         // 尝试以 UTF-8 文本读取
         match fs::read_to_string(path) {
             Ok(content) => {
-                // 如果本身就是 markdown 格式
-                if extension == "md" || extension == "markdown" {
+                // 如果本身就是 markdown 格式或纯文本格式，直接保持文本内容，不添加任何文件名标题
+                if extension == "md" || extension == "markdown" || extension == "txt" || extension == "log" || extension.is_empty() {
                     return ConvertResult {
                         file_path: path_str,
                         file_name: file_name.to_string(),
@@ -148,7 +148,11 @@ impl Converter {
                         success: true,
                         markdown: content,
                         error_message: None,
-                        engine: "raw-markdown".to_string(),
+                        engine: if extension == "md" || extension == "markdown" {
+                            "raw-markdown".to_string()
+                        } else {
+                            "plain-text".to_string()
+                        },
                         duration_ms: start.elapsed().as_millis(),
                     };
                 }
@@ -179,12 +183,11 @@ impl Converter {
                     _ => "",
                 };
 
+                // 代码仅包装语法高亮代码块，不添加文件名标题
                 let markdown = if !lang.is_empty() {
-                    format!("### `{}`\n\n```{}\n{}\n```\n", file_name, lang, content)
-                } else if extension == "txt" || extension == "log" || extension.is_empty() {
-                    format!("### `{}`\n\n{}\n", file_name, content)
+                    format!("```{}\n{}\n```\n", lang, content)
                 } else {
-                    format!("### `{}`\n\n```\n{}\n```\n", file_name, content)
+                    content
                 };
 
                 ConvertResult {
@@ -202,8 +205,8 @@ impl Converter {
             Err(_) => {
                 // 读取非 UTF-8 文本，说明可能是二进制媒体文件（图片、音视频、zip 等）
                 let markdown = format!(
-                    "### `{}`\n\n> ⚠️ 该文件为非文本/媒体二进制文件，无法提取直接排版文本。\n\n| 属性 | 信息 |\n| --- | --- |\n| 文件名 | `{}` |\n| 格式后缀 | `{}` |\n| 文件大小 | `{}` 字节 |\n",
-                    file_name, file_name, extension, file_size
+                    "> ⚠️ 该文件为非文本/媒体二进制文件，无法提取直接排版文本。\n\n| 属性 | 信息 |\n| --- | --- |\n| 文件名 | `{}` |\n| 格式后缀 | `{}` |\n| 文件大小 | `{}` 字节 |\n",
+                    file_name, extension, file_size
                 );
 
                 ConvertResult {
@@ -278,6 +281,21 @@ mod tests {
         let result = Converter::convert_file(path);
         assert!(result.success);
         assert!(result.markdown.contains("这是测试正文"));
+        assert!(!result.markdown.contains("### `"));
+    }
+
+    #[test]
+    fn test_convert_txt_file_without_title() {
+        let dir = tempfile::tempdir().unwrap();
+        let file_path = dir.path().join("未命名.txt");
+        fs::write(&file_path, "这是纯文本测试内容").unwrap();
+
+        let result = Converter::convert_file(file_path.to_str().unwrap());
+        assert!(result.success);
+        assert_eq!(result.markdown, "这是纯文本测试内容");
+        // 关键断言：不得把文件名转化为 Markdown 标题
+        assert!(!result.markdown.contains("未命名.txt"));
+        assert!(!result.markdown.contains("###"));
     }
 
     #[test]
@@ -291,6 +309,8 @@ mod tests {
         assert_eq!(result.engine, "text-code-wrapper");
         assert!(result.markdown.contains("```rust"));
         assert!(result.markdown.contains("fn main()"));
+        // 关键断言：不包含文件名标题
+        assert!(!result.markdown.contains("### `main.rs`"));
     }
 
     #[test]
