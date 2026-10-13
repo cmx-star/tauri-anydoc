@@ -1,6 +1,6 @@
 [package]
 name = "anydoc-desktop"
-version = "0.1.3"
+version = "0.1.4"
 description = "Universal Document to Markdown Converter based on anydoc"
 authors = ["codex"]
 edition = "2021"
