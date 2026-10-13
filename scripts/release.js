@@ -115,7 +115,7 @@ function handleGit(newVersion) {
   }
 
   // Git 操作
-  run("git add package.json src-tauri/Cargo.toml src-tauri/tauri.conf.json", rootDir);
+  run("git add package.json src-tauri/Cargo.toml src-tauri/Cargo.lock src-tauri/tauri.conf.json", rootDir);
   run(`git commit -m "chore(release): ${tag}"`, rootDir);
   run(`git tag -a ${tag} -m "Release ${tag}"`, rootDir);
 
