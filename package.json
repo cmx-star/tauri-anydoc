@@ -1,7 +1,7 @@
 {
   "name": "anydoc-desktop",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -9,7 +9,8 @@
     "mac-dev": "tauri dev --target aarch64-apple-darwin",
     "mac-build": "tauri build --target aarch64-apple-darwin",
     "preview": "vite preview",
-    "tauri": "tauri"
+    "tauri": "tauri",
+    "release": "node scripts/release.js"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.2.0",
